@@ -164,6 +164,7 @@ Verboice::Application.routes.draw do
         collection do
           get 'by_address/:address', :action => "show_by_address"
           put 'by_address/:address', :action => "update_by_address"
+          put 'by_id/:id', :action => "update_by_id"
           put 'all', :action => "update_all"
         end
       end
