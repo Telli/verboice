@@ -88,6 +88,38 @@ class Api::ContactsController < ApiController
 
     render json: contacts_to_json([contact])[0]
   end
+  
+  
+   def update_by_id
+   contact = project.contacts.joins(:addresses).where(:id => params[:id]).first or return head(:not_found)
+    project_vars = project.project_variables.all
+    project_vars = project_vars.index_by &:name
+
+    vars = PersistedVariable.includes(:project_variable).where(project_variables: {project_id: project.id}, contact_id: contact.id).all
+    vars = vars.index_by { |var| var.project_variable.name }
+
+    Contact.transaction do
+      params[:vars].each do |key, value|
+        var = vars[key]
+        unless var
+          project_var = project_vars[key]
+          unless project_var
+            return render text: "No such variable: #{key}", status: :bad_reqeust
+          end
+
+          var = PersistedVariable.new
+          var.contact_id = contact.id
+          var.project_variable_id = project_var.id
+        end
+        var.value = value
+        var.save!
+      end
+    end
+
+    render json: contacts_to_json([contact])[0]
+  end
+ 
+  
 
   def update_all
     project_vars = project.project_variables.all
